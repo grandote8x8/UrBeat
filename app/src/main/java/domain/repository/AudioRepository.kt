@@ -125,9 +125,11 @@ class AudioRepository(private val context: Context) {
                             waveform ?: return
 
                             val normalized = normalizeWaveform(waveform)
+                            // 🔹 NUEVO: Aplicar ganancia del ecualizador
+                            val withGain = applyEqualizerGainToWaveform(normalized)
 
                             _visualizerData.value = _visualizerData.value.copy(
-                                waveform = normalized
+                                waveform = withGain
                             )
                         }
 
@@ -235,6 +237,42 @@ class AudioRepository(private val context: Context) {
     private fun normalizeWaveform(waveform: ByteArray): FloatArray {
         return FloatArray(waveform.size) { i ->
             (waveform[i].toInt() + 128) / 255f
+        }
+    }
+
+    // 🔹 NUEVO: Aplicar ganancia del ecualizador al waveform
+    private fun applyEqualizerGainToWaveform(waveform: FloatArray): FloatArray {
+        if (equalizer == null || !_equalizerState.value.isEnabled) {
+            return waveform
+        }
+
+        // Calcular ganancia promedio de todas las bandas
+        var totalGain = 0f
+        var bandCount = 0
+
+        try {
+            val numBands = equalizer?.numberOfBands?.toInt() ?: 0
+            for (i in 0 until numBands) {
+                val gainMillibels = equalizer?.getBandLevel(i.toShort()) ?: 0
+                totalGain += (gainMillibels / 100f) // Convertir de millibels a escala
+                bandCount++
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error calculating equalizer gain", e)
+        }
+
+        if (bandCount == 0) return waveform
+
+        // Ganancia promedio normalizada (-1.0 a +1.0)
+        val avgGain = (totalGain / bandCount) / 10f
+
+        // Factor de escala: 1.0 = sin cambio, >1.0 = amplifica, <1.0 = atenúa
+        val scaleFactor = (1.0f + avgGain).coerceIn(0.3f, 2.0f)
+
+        // Aplicar la ganancia al waveform
+        return FloatArray(waveform.size) { i ->
+            val scaledValue = 0.5f + (waveform[i] - 0.5f) * scaleFactor
+            scaledValue.coerceIn(0f, 1f)
         }
     }
 

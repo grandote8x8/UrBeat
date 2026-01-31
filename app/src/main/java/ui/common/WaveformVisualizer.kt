@@ -96,7 +96,7 @@ fun WaveformVisualizer(
                     val nextIdx = ((i + 1) * step).toInt().coerceIn(0, smoothed.lastIndex)
                     val interpolated = (smoothed[idx] + smoothed[nextIdx]) / 2f
                     val x = (i.toFloat() / (displayPoints - 1)) * width
-                    val y = centerY + (interpolated - 0.5f) * height * 0.8f
+                    val y = centerY + (interpolated - 0.5f) * height * 0.6f
                     if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
                 }
             }
