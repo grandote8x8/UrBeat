@@ -6,7 +6,6 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.equalizer2.data.repository.AudioRepository
-import com.example.equalizer2.domain.model.EqualizerPreset
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +36,8 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
             }
             setOnCompletionListener {
                 _isPlaying.value = false
+                // 🔹 NUEVO: Pausar visualizer cuando termina la canción
+                audioRepository.pauseVisualizer()
             }
             prepareAsync()
         }
@@ -47,9 +48,13 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
             if (it.isPlaying) {
                 it.pause()
                 _isPlaying.value = false
+                // 🔹 NUEVO: Pausar visualizer y resetear datos
+                audioRepository.pauseVisualizer()
             } else {
                 it.start()
                 _isPlaying.value = true
+                // 🔹 NUEVO: Reanudar visualizer
+                audioRepository.resumeVisualizer()
             }
         }
     }
@@ -68,14 +73,11 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-
     fun toggleEqualizer(enabled: Boolean) {
         viewModelScope.launch {
             audioRepository.toggleEqualizer(enabled)
         }
     }
-
-
 
     override fun onCleared() {
         super.onCleared()
@@ -98,5 +100,4 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
     fun stopSignalGenerator() {
         repository.stopSignalGenerator()
     }
-
 }

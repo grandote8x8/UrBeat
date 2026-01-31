@@ -35,9 +35,19 @@ fun WaveformVisualizer(
     var animationProgress by remember { mutableStateOf(0f) }
     var trailPoints by remember { mutableStateOf(listOf<Float>()) }
 
-    // Guardamos los últimos 1024 puntos del waveform
-    LaunchedEffect(waveform) {
-        trailPoints = waveform.toList().takeLast(1024)
+    // 🔹 NUEVO: Resetear trailPoints cuando no está animando
+    LaunchedEffect(isAnimating) {
+        if (!isAnimating) {
+            // Cuando pausa, resetear a línea central
+            trailPoints = List(1024) { 0.5f }
+        }
+    }
+
+    // Guardamos los últimos 1024 puntos del waveform solo si está animando
+    LaunchedEffect(waveform, isAnimating) {
+        if (isAnimating) {
+            trailPoints = waveform.toList().takeLast(1024)
+        }
     }
 
     // Animación tipo scroll horizontal

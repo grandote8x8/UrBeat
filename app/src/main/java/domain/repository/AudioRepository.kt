@@ -19,7 +19,6 @@ import kotlin.math.sqrt
 
 class AudioRepository(private val context: Context) {
 
-
     private var equalizer: Equalizer? = null
     private var visualizer: Visualizer? = null
 
@@ -85,7 +84,6 @@ class AudioRepository(private val context: Context) {
         audioTrack?.release()
         audioTrack = null
     }
-
 
     // 🔹 SE LLAMA CUANDO EL USUARIO ELIGE CANCIÓN
     fun initializeEqualizer(audioSessionId: Int) {
@@ -161,6 +159,31 @@ class AudioRepository(private val context: Context) {
         }
     }
 
+    // 🔹 NUEVO: Pausar visualizer y resetear datos
+    fun pauseVisualizer() {
+        try {
+            visualizer?.enabled = false
+            // Resetear los datos a valores vacíos/cero
+            _visualizerData.value = AudioVisualizerData(
+                waveform = FloatArray(CAPTURE_SIZE) { 0.5f }, // 0.5f = línea central
+                amplitudes = FloatArray(BAR_COUNT) { 0f }      // 0f = sin altura
+            )
+            Log.d(TAG, "Visualizer paused and data reset")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error pausing visualizer", e)
+        }
+    }
+
+    // 🔹 NUEVO: Reanudar visualizer
+    fun resumeVisualizer() {
+        try {
+            visualizer?.enabled = true
+            Log.d(TAG, "Visualizer resumed")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error resuming visualizer", e)
+        }
+    }
+
     // 🔹 EQUALIZER BANDS (sin cambios de lógica)
     private fun createEqualizerBands(): List<EqualizerBand> {
         val eq = equalizer ?: return emptyList()
@@ -202,7 +225,6 @@ class AudioRepository(private val context: Context) {
             Log.e(TAG, "Error setting band level", e)
         }
     }
-
 
     fun toggleEqualizer(enabled: Boolean) {
         equalizer?.enabled = enabled
@@ -255,5 +277,6 @@ class AudioRepository(private val context: Context) {
     fun release() {
         releaseEqualizer()
         releaseVisualizer()
+        stopSignalGenerator()
     }
 }
