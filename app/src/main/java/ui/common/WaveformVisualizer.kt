@@ -17,6 +17,7 @@ import com.example.equalizer2.ui.theme.NeonPink
 import com.example.equalizer2.ui.theme.NeonPurple
 import com.example.equalizer2.ui.theme.SurfaceVariant
 import kotlin.math.sin
+import kotlin.math.pow
 
 private fun smooth(data: FloatArray, window: Int = 5): FloatArray {
     return FloatArray(data.size) { i ->
@@ -159,7 +160,8 @@ fun AmplitudeVisualizer(
             val barWidth = width / barCount
             val spacing = 4.dp.toPx()
 
-            if (amplitudes.isEmpty()) {
+            if (amplitudes.isEmpty() || amplitudes.all { it == 0f }) {
+                // Animación de demostración cuando no hay audio
                 for (i in 0 until barCount) {
                     val barHeight = height * (0.3f + sin(i * 0.5f).toFloat() * 0.3f)
                     val x = i * barWidth
@@ -174,12 +176,19 @@ fun AmplitudeVisualizer(
                     )
                 }
             } else {
-                val step = amplitudes.size / barCount.coerceAtLeast(1)
+                // Visualización real del espectro de audio
                 for (i in 0 until barCount) {
-                    val index = (i * step).coerceIn(0, amplitudes.size - 1)
-                    val amplitude = amplitudes[index].coerceIn(0f, 1f)
-                    val barHeight = height * amplitude
+                    val amplitude = if (i < amplitudes.size) {
+                        amplitudes[i].coerceIn(0f, 1f)
+                    } else {
+                        0f
+                    }
+
+                    // Aplicar una curva para mejor visualización
+                    val visualAmplitude = amplitude.toDouble().pow(0.7).toFloat()
+                    val barHeight = (height * visualAmplitude).coerceAtLeast(2.dp.toPx())
                     val x = i * barWidth
+
                     drawRect(
                         brush = Brush.verticalGradient(
                             colors = listOf(NeonPink, NeonPurple),
@@ -189,7 +198,7 @@ fun AmplitudeVisualizer(
                         topLeft = Offset(x + spacing, height - barHeight),
                         size = androidx.compose.ui.geometry.Size(
                             barWidth - spacing * 2,
-                            barHeight.coerceAtLeast(2.dp.toPx())
+                            barHeight
                         )
                     )
                 }

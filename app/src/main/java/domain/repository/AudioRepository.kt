@@ -238,20 +238,38 @@ class AudioRepository(private val context: Context) {
         }
     }
 
-    // 🔹 AMPLITUDES SUAVES (32 barras)
+    // 🔹 AMPLITUDES SUAVES (32 barras) - CORREGIDO
     private fun calculateAmplitudes(fft: ByteArray): FloatArray {
-        val step = fft.size / (BAR_COUNT * 2)
         val amplitudes = FloatArray(BAR_COUNT)
 
+        // FFT data viene en pares (real, imaginario)
+        // Usamos solo la mitad del FFT (frecuencias positivas)
+        val usableSize = fft.size / 2
+        val barSize = usableSize / BAR_COUNT
+
         for (i in 0 until BAR_COUNT) {
-            val index = i * step * 2
-            if (index + 1 < fft.size) {
-                val real = fft[index].toInt()
-                val imag = fft[index + 1].toInt()
-                val magnitude = sqrt((real * real + imag * imag).toDouble())
-                amplitudes[i] = (magnitude / 128f).toFloat().coerceIn(0f, 1f)
+            var sum = 0.0
+            var count = 0
+
+            // Promediamos las magnitudes dentro de cada rango de frecuencia
+            val startIdx = i * barSize
+            val endIdx = minOf(startIdx + barSize, usableSize - 1)
+
+            for (j in startIdx until endIdx step 2) {
+                if (j + 1 < fft.size) {
+                    val real = fft[j].toInt()
+                    val imag = fft[j + 1].toInt()
+                    val magnitude = sqrt((real * real + imag * imag).toDouble())
+                    sum += magnitude
+                    count++
+                }
             }
+
+            // Normalizamos y aplicamos una curva logarítmica para mejor visualización
+            val avgMagnitude = if (count > 0) sum / count else 0.0
+            amplitudes[i] = (avgMagnitude / 100.0).toFloat().coerceIn(0f, 1f)
         }
+
         return amplitudes
     }
 
