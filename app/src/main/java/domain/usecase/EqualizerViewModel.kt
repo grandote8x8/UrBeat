@@ -22,6 +22,16 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
     val equalizerState = audioRepository.equalizerState
     val visualizerData = audioRepository.visualizerData
 
+    // 🆕 Estado del volumen
+    private val _volume = MutableStateFlow(0.7f) // Volumen inicial al 70%
+    val volume: StateFlow<Float> = _volume.asStateFlow()
+
+    // 🆕 Función para cambiar el volumen
+    fun setVolume(newVolume: Float) {
+        _volume.value = newVolume.coerceIn(0f, 1f)
+        mediaPlayer?.setVolume(_volume.value, _volume.value)
+    }
+
     fun playUserAudio(uri: Uri) {
         mediaPlayer?.release()
 
@@ -31,6 +41,7 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
                 val sessionId = audioSessionId
                 audioRepository.initializeEqualizer(sessionId)
                 audioRepository.initializeVisualizer(sessionId)
+                setVolume(_volume.value, _volume.value)
                 start()
                 _isPlaying.value = true
             }
@@ -89,15 +100,15 @@ class EqualizerViewModel(application: Application) : AndroidViewModel(applicatio
 
     val signalState = repository.signalState
 
-    fun setSignalFrequency(freq: Float) {
-        repository.startSignalGenerator(freq, signalState.value.amplitude)
-    }
+    //fun setSignalFrequency(freq: Float) {
+    //    repository.startSignalGenerator(freq, signalState.value.amplitude)
+        //}
 
-    fun setSignalAmplitude(amp: Float) {
-        repository.startSignalGenerator(signalState.value.frequency, amp)
-    }
+    //fun setSignalAmplitude(amp: Float) {
+        //   repository.startSignalGenerator(signalState.value.frequency, amp)
+        // }
 
-    fun stopSignalGenerator() {
-        repository.stopSignalGenerator()
-    }
+    //fun stopSignalGenerator() {
+    //    repository.stopSignalGenerator()
+    //}
 }

@@ -19,9 +19,11 @@ import ui.common.AmplitudeVisualizer
 import ui.common.EqualizerControl
 import ui.common.PlaybackControl
 import ui.common.PresetSelector
+import ui.common.VolumeControl
 import ui.common.WaveformVisualizer
 import kotlin.math.sin
 import kotlin.math.PI
+
 
 @Composable
 fun EqualizerScreen(viewModel: EqualizerViewModel) {
@@ -30,7 +32,7 @@ fun EqualizerScreen(viewModel: EqualizerViewModel) {
     val visualizerData by viewModel.visualizerData.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
     val signalState by viewModel.signalState.collectAsState()
-
+    val volume by viewModel.volume.collectAsState()
     var isGeneratorEnabled by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
@@ -85,6 +87,13 @@ fun EqualizerScreen(viewModel: EqualizerViewModel) {
 
             AmplitudeVisualizer(
                 amplitudes = visualizerData.amplitudes
+            )
+
+            VolumeControl(
+                volume = volume,
+                onVolumeChange = { newVolume ->
+                    viewModel.setVolume(newVolume)
+                }
             )
 
             // 🎚️ Preset selector
